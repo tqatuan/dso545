@@ -1,0 +1,45 @@
+
+library(tidyverse)
+vaccine <- read.csv("vaccine.csv")
+library(ggplot2)
+
+vaccine$subregion=vaccine$County.Name
+
+vaccine$subregion=tolower(vaccine$County.Name)
+
+USA <- map_data("county")
+
+merged=left_join(USA, vaccine, by="subregion")
+
+library(ggplot2)
+
+merged_df <- merged
+
+ggplot(merged_df, aes(long, lat,group=group, fill= (COVID.Cases/Population)))+
+  geom_polygon( colour = "gray", size = 0.001)+ 
+  scale_fill_gradient2(low = "white", mid = "orange3", high="darkred")+ theme_void()+ labs( fill = "Covid cases per cap")+
+  ggtitle("COVID Cases per capita by county")
+
+ggplot(merged_df, aes(long, lat,group=group, fill= COVID.Deaths/Population))+
+  geom_polygon( colour = "grey", size = 0.01)+ 
+  scale_fill_gradient2(low = "darkcyan", mid = "beige", high="yellow4")+ theme_void() + labs( fill = "Covid deaths per cap")+
+  ggtitle("COVID Deaths per capita by county")
+
+
+df <- merged_df %>% 
+  select( Estimated.strongly.hesitant,
+          pct_hispanic,
+          pct_white_.non_hispanic,
+          pct_black_.non_hispanic,
+          pct_asian_non_hispanic)
+install.packages("corrplot")
+library(corrplot)
+source("http://www.sthda.com/upload/rquery_cormat.r")
+
+rquery.cormat(df, type="upper",
+              col=brewer.pal(n=8, name="RdYlBu"))
+
+
+?rquery.cormat
+
+
