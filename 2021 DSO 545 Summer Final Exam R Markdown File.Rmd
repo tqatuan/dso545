@@ -1,0 +1,300 @@
+---
+title: "2021 DSO 545 Final Exam"
+author: "Summer Term"
+date: "7/12/2021"
+output: html_document
+---
+
+
+
+**Instructions**
+*This is an open book/notes exam. You are NOT allowed to use the Internet as a resource except for downloading the files from blackboard, as well as for inspecting a website for scrapping the data for one of the questions below. You are NOT allowed to communicate with ANY PERSON in or outside the class during the exam period. If you are asked to create an exact copy of some graph, make sure to replicate the graph. Pay attention to axis names, legend name/ position, order of bars etc. Answer all questions below. Don’t change the data file names and save the objects as instructed in the question. Submit your files to blackboard. You must submit either an R script and PDF or RMD file and PDF.*
+
+
+*“I hereby certify that I have adhered to the university policies regarding ethical behavior in preparing for and completing this midterm exam. I will not discuss the exam questions and solutions with anyone in the classroom or outside the classroom via any means.”*
+
+
+
+*Name: ———————Tuan——————–*
+*Signature: ———————Tuan Tran——————–*
+ 
+ 
+1.	(2 points) When scraping using the rvest package, where does the xpath you copied from inspecting the element of the specified website go in?
+
+a)	read_html()
+b)	html_nodes()
+c)	html_table()
+d)	table[[]]
+e)	None of the above
+
+
+*Type your answer for #1 here =   b  *
+
+2.	(2 points) What is the skeleton structure of a shinyApp?
+
+a)	ui = fluidPage{} server = function(input, output){}(), shinyApp(ui, server)
+b)	ui = fluidPage() and Server = function{input, output}(), shinyApp(ui, server)
+c)	ui = fluidPage{}, server = function(input, output){}, shinyApp(ui, server)
+d)	ui = fluidPage(), server = function(input, output){}, shinyApp(ui, server)
+e)	None of the above
+
+
+*Type your answer for #2 here =   d  *
+
+
+3.	(2 points) When working with the stringr package which function should you use to identify a character, resulting in a logical vector? 
+a)	str_sub
+b)	str_locate
+c)	str_split
+d)	str_detect
+e)	str_replace
+
+
+*Type your answer for #3 here =  d   *
+```{r}
+library(tidyverse)
+library(lubridate)
+library(maps)
+library(mapproj)
+library(stringr)
+library(ggplot2)
+
+laker <- read.csv(file.choose())
+unicorn <- read.csv(file.choose())
+```
+
+4.	 (2 points) Create an object called pizzas containing the following toppings; cheese, pepperoni, sausage, and green peppers. Then identify which orders contain the pattern "pepper" using the appropriate function from the stringr package.
+```{r}
+
+pizzas<- c("cheese", "pepperoni", "sausage", "green peppers")
+
+str_detect(pizzas, pattern = "pepper")
+
+
+```
+
+
+5.	(2 points) Create an object called county_locations containing the following counties and states; Orange County, Los Angeles", "King County, Seattle", "Teton County, Wyoming". Then using the appropriate function from the stringr package split the county from the state.
+```{r}
+
+county_locations <- c("Orange County, Los Angeles", "King County, Seattle", "Teton County, Wyoming")
+
+
+str_split(county_locations, pattern = ",")
+
+```
+
+
+6.	(8 points) The lakers data set contains play by play statistics of every major league 
+basketball game played by the Los Angeles Lakers during the 2008-2009 season. 
+This data is from http://www.basketballgeek.com/downloads/ (Parker 2010) and 
+comes with the lubridate package. Using the str() command, we see that R recognizes 
+the dates as integers. Before we can work with them as dates, we must parse them into R 
+as date-time objects. (show your code, head of output, and show the structure). 
+```{r}
+
+laker$date=ymd(laker$date)
+
+head(laker$date)
+
+```
+
+
+7.	 (8 points) Next, examine Lakers games throughout the week. Extract the day of the week and 
+display the frequency of basketball games varies throughout the week. Create the graph below.
+```{r}
+
+laker$dayname=wday(laker$date,label = T, abbr = T )
+
+laker %>% 
+  group_by(dayname) %>% 
+  summarize( count = n_distinct(X)) %>% 
+  ggplot(aes(dayname, count))+geom_col( width = 0.3)+
+  xlab("Day of the Week") + ylab("Count")
+
+
+```
+
+
+8.	(5 points) Which is the statistical model that should be implemented if you were interested in gametype differences between games played home and away on number of points? Now run it and report whether there were statistically significant differences?
+
+We should implement ANOVA
+```{r}
+model<-aov(points~game_type, laker)
+summary(model)
+
+```
+
+There is no statistical differences between gametype "home" & "awaY" since pr(>F) is 0.145, larger than alpha=0.05
+
+
+9.	(8 points) A unicorn startup or unicorn company is a private company with a valuation over $1 billion. There are more than 300 unicorns around the world. In this exercise, we will study these unicorns, their valuations, industry, as top investors. Please download the unicorn dataset from blackboard and import into Rstudio. To which industry does it belong? 
+Create a bar chart like below that shows the distribution of the unicorns among different industries. Which industry has the greatest number of unicorns? Show your code, please see the PDF.
+```{r}
+unicorn$Industry=factor(unicorn$Industry)
+unicorn1 <- unicorn %>% 
+  group_by(Industry) %>% 
+  summarise( Industry = unique(Industry), count= n_distinct(Company) ) %>% 
+  arrange(desc(count)) 
+
+unicorn2<- unicorn1[1:9,]
+
+unicorn2 %>% 
+  ggplot(aes(reorder(Industry, -count), count)) +
+  geom_col()+coord_flip() +
+  ylab("Number of Unicorn") + xlab(" ")
+
+```
+
+
+10.	(5 points) What is the total valuation for the unicorns in the Fintech industry? Show your code.
+```{r}
+
+unicorn3 <-  unicorn %>% 
+  filter( Industry == "Fintech")
+
+df <-as.numeric(str_sub(unicorn3$Valuation, start =2))
+sum(df)
+
+
+```
+Total valuation of Fintech company is $105.04M
+
+11.	(8 points) Use a stacked bar graph to show the total number of unicorns for India, China, and USA. Show your code.
+```{r}
+
+unicorn$DateJoined=mdy(unicorn$DateJoined)
+
+unicorn$year=year(unicorn$DateJoined)
+
+unicorn$year=as.factor(unicorn$year)
+
+
+unicorn4<- unicorn %>% 
+  filter( Country=="China"|Country=="USA"|Country=="India") %>% 
+  group_by(year) %>% 
+  summarise( Country=Country, count = n_distinct(Company))
+
+unicorn4$Country=as.factor(unicorn4$Country)
+
+
+ggplot(unicorn4, aes(year, count, fill = Country))+
+  geom_col() + ylab("Number of Unicorns") +
+  ggtitle("Number of Unicorn Companies in China, India and USA")
+
+```
+
+
+12.	 (8 points) Create a choropleth map to show the number of unicorns in different countries. 
+Show your code.
+```{r}
+
+world <-map_data("world")
+
+unicorn5 <- mutate(unicorn, region = Country)
+
+unicorn6 <- unicorn5 %>% 
+  group_by(region) %>% 
+  summarize(region = unique(region), count = n_distinct(Company))
+  
+merged_df <- left_join(world, unicorn6, by = "region" )
+merged_df[is.na(merged_df)]<-0
+
+merged_df %>% 
+  ggplot(aes(long, lat, group=group, fill = count))+
+geom_polygon( color = "black") + 
+scale_fill_gradient( low = "white", high = "darkred" )+
+  theme_void() 
+
+
+
+```
+                    
+
+13.	 (2 points) Create an object called some.eu.countries that consists of the following countries as elements; Portugal, Spain, France, Switzerland, Germany, Belgium, Norway, and Finland.
+```{r}
+
+some.eu.countries= c("Portugal","Spain", "France", "Switzerland", "Germany", "Belgium", "Norway", "Finland")
+
+
+some.eu.countries = map_data("world", region =c("Portugal","Spain", "France", "Switzerland", "Germany", "Belgium", "Norway", "Finland"))
+
+
+```
+                       
+                       
+14.	 (5 points) Then go ahead and retrieve the map data for some.eu.countries (which provides data for many countries in Europe) and save in an object called some.eu.maps.
+```{r}
+
+some.eu.maps = map_data("world", region =c("Portugal","Spain", "France", "Switzerland", "Germany", "Belgium", "Norway", "Finland"))
+
+```
+
+
+15.	 (8 points) Finally, please visualize the coordinates for each of the countries’ names by region and obtain a summary of the average of those coordinates, then save it in an object called region.lab.data.
+```{r}
+some.eu.maps %>% 
+  ggplot(aes(long, lat, group=group))+
+  geom_polygon(fill = "black", color = "white") + theme_void()
+
+region.lab.data<- some.eu.maps %>% 
+  group_by(region) %>% 
+  summarise(region = unique(region), 
+            avg_long=mean(long),
+            avg_lat=mean(lat))
+
+```
+
+
+16.	(8 points) Now create the spatial map below and use a function scale_fill_viridis_d() + theme_void() to obtain the same color scheme.
+```{r}
+some.eu.countries %>% 
+  ggplot(aes(long, lat, group=group, fill = region))+
+  geom_polygon() +
+  scale_fill_viridis_d()+ theme_void()
+
+```
+
+ 
+17.	(2 points) Now working with state data, please obtain state data and save it in an object called states and display the first six rows.
+```{r}
+
+states<- map_data("state")
+head(states)
+
+```
+
+18.	(2 points) Now that you have a states object, filter for Arizona and save it as an object az.
+	Filter the state of Arizona from the states and save it as an object called az and provide the first six rows.
+```{r}
+
+az <- states %>% 
+  filter( region == "arizona")
+
+head(az)
+
+
+```
+
+19.	(5 points) Obtain the data at the county level and save it in an object called counties. Then narrow it to obtain the counties for the state of Arizona and save it in an object called az_county.
+```{r}
+
+counties <- map_data("county")
+
+az_county <- counties %>% 
+  filter(region== "arizona")
+
+
+```
+
+
+20.	(8 points) Create a plot that shows the boundaries of the state of Arizona in the color blue.
+```{r}
+
+az_county %>% 
+  ggplot(aes(long, lat, group=group, fill = count))+
+geom_polygon(fill="blue", color = "black") + 
+  theme_void()
+
+```
+
